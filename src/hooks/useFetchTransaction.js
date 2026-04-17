@@ -12,7 +12,7 @@ import dayjs from "dayjs";
  * Fetch transactions + reward data
  * @returns {Object} data, loading, error, monthlyData, totalData
 */
-const useDataFetcher = ({
+const useFetchTransaction = ({
   fetchFn = fetchTransactions,
   transformFn = (data) => data,
   addPoints = true,
@@ -40,7 +40,7 @@ const useDataFetcher = ({
 
         setFetchState({ data: enriched, loading: false, error: null });
       }).catch((error) => {
-        logger.error("Error in useDataFetcher:", error);
+        logger.error("Error in useFetchTransaction:", error);
         setFetchState({
           data: [],
           loading: false,
@@ -85,5 +85,5 @@ const useDataFetcher = ({
   return { ...fetchState, monthlyData, totalData };
 };
 
-export default useDataFetcher;
+export default useFetchTransaction;
 

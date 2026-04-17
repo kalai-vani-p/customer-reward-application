@@ -129,7 +129,7 @@ const CommonTable = ({ tabs }) => {
   
   // Pagination (fixed size)
   const paginatedData = useMemo(() => {
-    const PAGE_SIZE = isMonthlyTab ? 2 : 5;
+    const PAGE_SIZE = isMonthlyTab ? 5 : 5;
     if (!isMonthlyTab) {
       const sorted = [...filteredData].sort((a, b) => {
         const aVal = a?.[tableState.orderBy];
@@ -252,7 +252,7 @@ const CommonTable = ({ tabs }) => {
         <TablePaginationComponent
           count={isMonthlyTab ? groupedData.length : filteredData.length}
           page={tableState.page}
-          rowsPerPage={isMonthlyTab ? 2 : 5}
+          rowsPerPage={isMonthlyTab ? 5 : 5}
           onPageChange={(_, p) =>
             setTableState((prev) => ({ ...prev, page: p }))
           }
