@@ -38,6 +38,7 @@ const CommonTable = ({ tabs }) => {
       from: dayjs().subtract(2, "month").startOf("month").format("YYYY-MM-DD"),
       to: dayjs().format("YYYY-MM-DD"),
     }
+    
   });
 
   const debouncedSearch = useDebounce(tableState.search, 300);
