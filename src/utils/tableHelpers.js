@@ -32,3 +32,23 @@ export const formatUSD = (value) => {
 
 export const getCellAlignment = (field) =>
   ["price", "points"].includes(field) ? "right" : "left";
+
+/**
+ * Deeply freezes an object, including all nested objects and arrays.
+ *
+ * @param {Object} obj - The object to be deeply frozen
+ * @returns {Object} The fully frozen object
+ */
+export const deepFreeze = (obj) => {
+  Object.freeze(obj);
+  Object.getOwnPropertyNames(obj).forEach((prop) => {
+    if (
+      obj[prop] !== null &&
+      (typeof obj[prop] === "object" || typeof obj[prop] === "function") &&
+      !Object.isFrozen(obj[prop])
+    ) {
+      deepFreeze(obj[prop]);
+    }
+  });
+  return obj;
+};

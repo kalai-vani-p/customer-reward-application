@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import TransactionsPage from "../pages/TransactionsPage";
-import * as hook from "../hooks/useDataFetcher";
+import * as hook from "../hooks/useFetchTransaction";
 
 jest.mock("../components/CommonTable", () => () => (
   <div>CommonTable</div>

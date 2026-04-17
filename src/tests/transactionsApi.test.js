@@ -23,10 +23,11 @@ describe("fetchTransactions", () => {
   test("handles API failure", async () => {
     global.fetch.mockResolvedValue({
       ok: false,
+      json: async () => ({ message: "Invalid data format" }),
     });
 
     await expect(fetchTransactions()).rejects.toThrow(
-      "Failed to fetch transactions"
+      "Invalid data format"
     );
   });
 

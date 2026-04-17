@@ -7,15 +7,7 @@ import {
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { getCellAlignment } from "../../utils/tableHelpers";
-/**
- * Sortable table header component
- * @component
- * @param {Object} props
- * @param {Array<Object>} props.columns - table columns
- * @param {string} props.order - sort order
- * @param {string} props.orderBy - sorted field
- * @param {Function} props.onSort - sort handler
- */
+
 const TableHeader = ({ columns, order, orderBy, onSort }) => {
   return (
     <TableHead>

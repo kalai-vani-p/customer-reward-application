@@ -57,7 +57,7 @@
 ### 4️ Hooks Layer
     - Located in hooks/
     - Handles reusable logic and state management:
-    - useDataFetcher – Fetches and processes transaction data
+    - useFetchTransaction – Fetches and processes transaction data
 
 ### 5️ Error Handling Layer
     - Implemented using ErrorBoundary

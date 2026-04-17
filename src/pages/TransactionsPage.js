@@ -1,19 +1,20 @@
 import CommonTable from "../components/CommonTable";
-import useDataFetcher from "../hooks/useDataFetcher";
+import useFetchTransaction from "../hooks/useFetchTransaction";
 import Loader from "../components/Loader";
 import ErrorDisplay from "../components/ErrorDisplay";
+import { deepFreeze } from "../utils/tableHelpers";
 /**
  * Page component to display transactions and reward data
  * @component
  * @returns {JSX.Element} Rendered transactions page with table
  */
 const TransactionsPage = () => {
-  const { data, monthlyData, totalData, loading, error } = useDataFetcher();
+  const { data, monthlyData, totalData, loading, error } = useFetchTransaction();
 
   if (loading) return <Loader />;
   if (error) return <ErrorDisplay message={error.message} />;
 
-  const tabs = [
+  const tabs = deepFreeze([
     {
       label: "Monthly Rewards",
       type: "monthly",
@@ -51,7 +52,7 @@ const TransactionsPage = () => {
         { field: "points", header: "Reward Points" },
       ],
     },
-  ];
+  ]);
 
   return <CommonTable tabs={tabs} />;
 };

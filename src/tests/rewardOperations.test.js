@@ -26,15 +26,15 @@ describe("calculatePoints", () => {
   });
 
   test("negative", () => {
-    expect(calculatePoints(-100)).toBeNull();
+    expect(calculatePoints(-100)).toBe(0);
   });
 
   test("null", () => {
-    expect(calculatePoints(null)).toBeNull(); 
+    expect(calculatePoints(null)).toBe(0);
   });
 
   test("string input", () => {
-    expect(calculatePoints("abc")).toBeNull();
+    expect(calculatePoints("abc")).toBe(0);
   });
 
   test("decimal value", () => {
@@ -59,7 +59,7 @@ describe("groupByMonths", () => {
         month: "01",
         year: 2024,
         points: 10,
-        price: null, 
+        price: 0, 
       },
     ]);
   });
@@ -77,7 +77,7 @@ describe("groupByMonths", () => {
         month: "01",
         year: 2024,
         points: 10,
-        price: null,
+        price: 0,   
       },
       {
         customerId: "1",
@@ -85,7 +85,7 @@ describe("groupByMonths", () => {
         month: "02",
         year: 2024,
         points: 20,
-        price: null,
+        price: 0, 
       },
     ]);
   });
@@ -103,7 +103,7 @@ describe("groupByMonths", () => {
         month: "01",
         year: 2024,
         points: 10,
-        price: null,
+        price: 0,  
       },
       {
         customerId: "2",
@@ -111,7 +111,7 @@ describe("groupByMonths", () => {
         month: "01",
         year: 2024,
         points: 20,
-        price: null,
+        price: 0,  
       },
     ]);
   });
@@ -155,13 +155,13 @@ describe("groupByTotal", () => {
         customerId: "1",
         customerName: undefined,
         points: 30,
-        price: 0, // ✅ FIXED
+        price: 0,
       },
       {
         customerId: "2",
         customerName: undefined,
         points: 5,
-        price: 0, // ✅ FIXED
+        price: 0,
       },
     ]);
   });
@@ -177,13 +177,13 @@ describe("groupByTotal", () => {
         customerId: "1",
         customerName: undefined,
         points: 0,
-        price: 0, // ✅ FIXED
+        price: 0,
       },
       {
         customerId: "2",
         customerName: undefined,
         points: 0,
-        price: 0, // ✅ FIXED
+        price: 0,
       },
     ]);
   });

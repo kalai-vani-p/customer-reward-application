@@ -17,14 +17,14 @@ const useDataFetcher = ({
   transformFn = (data) => data,
   addPoints = true,
 } = {}) => {
-  const [state, setState] = useState({
+  const [fetchState, setFetchState] = useState({
     data: [],
     loading: false,
     error: null,
   });
 
   useEffect(() => {
-    setState((prev) => ({ ...prev, loading: true }));
+    setFetchState((prev) => ({ ...prev, loading: true }));
     fetchFn()
       .then((res) => {
         let enriched = res;
@@ -38,14 +38,13 @@ const useDataFetcher = ({
 
         enriched = transformFn(enriched);
 
-        setState({ data: enriched, loading: false, error: null });
-      })
-      .catch((error) => {
+        setFetchState({ data: enriched, loading: false, error: null });
+      }).catch((error) => {
         logger.error("Error in useDataFetcher:", error);
-        setState({
+        setFetchState({
           data: [],
           loading: false,
-          error: error instanceof Error ? error.message : "Failed to load data",
+          error: error?.message || "Failed to load data",
         });
       });
   }, []);
@@ -61,7 +60,7 @@ const useDataFetcher = ({
     }));
   };
   const monthlyData = useMemo(() => {
-    const grouped = groupByMonths(state.data);
+    const grouped = groupByMonths(fetchState.data);
     const last3 = getLast3CalendarMonths();
 
     return grouped.filter((item) =>
@@ -69,10 +68,10 @@ const useDataFetcher = ({
         (m) => m.month === item.month && m.year === String(item.year)
       )
     );
-  }, [state.data]);
+  }, [fetchState.data]);
 
   const totalData = useMemo(() => {
-    const grouped = groupByMonths(state.data);
+    const grouped = groupByMonths(fetchState.data);
     const last3 = getLast3CalendarMonths();
 
     const filtered = grouped.filter((item) =>
@@ -82,11 +81,9 @@ const useDataFetcher = ({
     );
 
     return groupByTotal(filtered);
-  }, [state.data]);
-  return { ...state, monthlyData, totalData };
+  }, [fetchState.data]);
+  return { ...fetchState, monthlyData, totalData };
 };
-
-
 
 export default useDataFetcher;
 

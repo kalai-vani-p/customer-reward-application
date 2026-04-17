@@ -2,10 +2,7 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined";
 import PropTypes from "prop-types";
-/**
- * Error display component
- * @param {string} message - error message
- */
+
 export default function ErrorDisplay({ message }) {
   return (
     <Box

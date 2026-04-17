@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Container,
   Paper,
@@ -21,61 +21,76 @@ import TableDateFilter from "./table/TableDateFilter";
 import TableMonthFilter from "./table/TableMonthFilter";
 import dayjs from "dayjs";
 
-/**
- * Reusable tabbed table component
- * @param {Array<Object>} tabs - tab configs
- */
 const CommonTable = ({ tabs }) => {
   const [tabIndex, setTabIndex] = useState(0);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [order, setOrder] = useState("asc");
-  const [orderBy, setOrderBy] = useState("id");
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const debouncedSearch = useDebounce(search, 300);
+
+  const [tableState, setTableState] = useState({
+    search: "",
+    page: 0,
+    order: "asc",
+    orderBy: "id",
+    selectedMonth: "",
+    dateRange: {
+      from: "",
+      to: "",
+    },
+    draftDateRange: {
+      from: dayjs().subtract(2, "month").startOf("month").format("YYYY-MM-DD"),
+      to: dayjs().format("YYYY-MM-DD"),
+    }
+  });
+
+  const debouncedSearch = useDebounce(tableState.search, 300);
+
   const activeTab = tabs?.[tabIndex] || { data: [], columns: [] };
   const isTransactionTab = activeTab.type === "transaction";
   const isMonthlyTab = activeTab.type === "monthly";
+  
+  //  Reset on tab change
+  useEffect(() => {
+    setTableState((prev) => ({
+      ...prev,
+      search: "",
+      page: 0,
+      selectedMonth: "",
+      dateRange: { from: "", to: "" },
+    }));
+  }, [tabIndex]);
 
-  const defaultTo = dayjs().format("YYYY-MM-DD");
-  const defaultFrom = dayjs().subtract(2, "month").startOf("month").format("YYYY-MM-DD");
-
-  const [fromDate, setFromDate] = useState(defaultFrom);
-  const [toDate, setToDate] = useState(defaultTo);
-  const [tempFrom, setTempFrom] = useState(fromDate);
-  const [tempTo, setTempTo] = useState(toDate);
+  // Filtering
   const filteredData = useMemo(() => {
-    const source = Array.isArray(activeTab.data) ? activeTab.data : [];
-
-    let result = source;
+    let result = Array.isArray(activeTab.data) ? activeTab.data : [];
 
     if (debouncedSearch) {
-      const searchWords = debouncedSearch.trim().toLowerCase().split(/\s+/);
+      const words = debouncedSearch.trim().toLowerCase().split(/\s+/);
 
-      result = result.filter((item) => {
-        const itemValues = Object.values(item).map((v) =>
-          String(v).toLowerCase()
-        );
-
-        return searchWords.every((word) =>
-          itemValues.some((val) => val.includes(word))
-        );
-      });
+      result = result.filter((item) =>
+        words.every((word) =>
+          [
+            item.customerId,
+            item.customerName,
+            item.transactionId,
+            item.product,
+          ]
+            .map((v) => String(v || "").toLowerCase())
+            .some((val) => val.includes(word))
+        )
+      );
     }
 
-    if (isTransactionTab && (fromDate || toDate)) {
+    // Date filter
+    if (isTransactionTab && (tableState.dateRange.from || tableState.dateRange.to)) {
       result = result.filter((item) => {
         if (!item.date) return false;
 
-        const itemDate = dayjs(item.date); 
+        const itemDate = dayjs(item.date);
 
-        const from = fromDate
-          ? dayjs(fromDate, "MM/DD/YYYY").startOf("day")
+        const from = tableState.dateRange.from
+          ? dayjs(tableState.dateRange.from).startOf("day")
           : null;
 
-        const to = toDate
-          ? dayjs(toDate, "MM/DD/YYYY").endOf("day")
+        const to = tableState.dateRange.to
+          ? dayjs(tableState.dateRange.to).endOf("day")
           : null;
 
         if (from && itemDate.isBefore(from)) return false;
@@ -85,150 +100,147 @@ const CommonTable = ({ tabs }) => {
       });
     }
 
+    // Monthly filter
+    if (isMonthlyTab && tableState.selectedMonth) {
+      const [year, month] = tableState.selectedMonth.split("-");
 
-    if (isMonthlyTab && selectedMonth) {
-      result = result.filter((item) => {
-        if (!item.year || !item.month) return false;
-
-        const [year, month] = selectedMonth.split("-");
-
-        return (
+      result = result.filter(
+        (item) =>
           String(item.year) === year &&
           String(item.month).padStart(2, "0") === month
-        );
-      });
+      );
     }
 
     return result;
-  }, [
-    activeTab.data,
-    debouncedSearch,
-    fromDate,
-    toDate,
-    selectedMonth,
-    isTransactionTab,
-    isMonthlyTab,
-  ]);
+  }, [activeTab.data, debouncedSearch, tableState, isTransactionTab, isMonthlyTab]);
 
-  const paginatedData = useMemo(() => {
-    const sorted = [...filteredData].sort((a, b) => {
-      const aVal = a?.[orderBy];
-      const bVal = b?.[orderBy];
+  // Grouping
+  const groupedData = useMemo(() => {
+    if (!isMonthlyTab) return filteredData;
 
-      if (aVal < bVal) return order === "asc" ? -1 : 1;
-      if (aVal > bVal) return order === "asc" ? 1 : -1;
-      return 0;
+    const map = {};
+    filteredData.forEach((item) => {
+      if (!map[item.customerId]) map[item.customerId] = [];
+      map[item.customerId].push(item);
     });
 
-    return sorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  }, [filteredData, order, orderBy, page, rowsPerPage]);
+    return Object.values(map);
+  }, [filteredData, isMonthlyTab]);
+  
+  // Pagination (fixed size)
+  const paginatedData = useMemo(() => {
+    const PAGE_SIZE = isMonthlyTab ? 2 : 5;
+    if (!isMonthlyTab) {
+      const sorted = [...filteredData].sort((a, b) => {
+        const aVal = a?.[tableState.orderBy];
+        const bVal = b?.[tableState.orderBy];
 
-  const handleSort = (field) => {
-    if (orderBy === field) {
-      setOrder(order === "asc" ? "desc" : "asc");
-    } else {
-      setOrderBy(field);
-      setOrder("asc");
+        if (aVal < bVal) return tableState.order === "asc" ? -1 : 1;
+        if (aVal > bVal) return tableState.order === "asc" ? 1 : -1;
+        return 0;
+      });
+
+      return sorted.slice(
+        tableState.page * PAGE_SIZE,
+        tableState.page * PAGE_SIZE + PAGE_SIZE
+      );
     }
-  };
+
+    return groupedData.slice(
+      tableState.page * PAGE_SIZE,
+      tableState.page * PAGE_SIZE + PAGE_SIZE
+    );
+  }, [filteredData, groupedData, tableState, isMonthlyTab]);
+
+  // Sort handler
+  const handleSort = useCallback((field) => {
+    setTableState((prev) => ({
+      ...prev,
+      orderBy: field,
+      order: prev.orderBy === field && prev.order === "asc" ? "desc" : "asc",
+    }));
+  }, []);
 
   return (
-    <Container maxWidth={false} sx={{ mt: 1, px: 1 }}>
-      <Card sx={{ mb: 1, borderRadius: 2, boxShadow: 3 }}>
+    <Container maxWidth={false} sx={{ mt: 2, px: 2 }}>
+      <Card sx={{ mb: 4, borderRadius: 2, boxShadow: 3 }}>
         <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <EmojiEventsIcon color="primary" />
-          <Typography
-            variant="h6"
-            fontWeight="bold"
-            color="#4b81b8"
-            sx={{ position: "relative", top: 3 }}
-          >
+          <Typography variant="h6" fontWeight="bold" color="#4b81b8">
             Rewards Dashboard
           </Typography>
         </CardContent>
       </Card>
 
-      <Paper
-        sx={{
-          p: 2,
-          borderRadius: 2,
-          border: "1px solid #e0e0e0",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-        }}
-      >
-        <Tabs
-          value={tabIndex}
-          onChange={(_, v) => {
-            setTabIndex(v);
-
-            setSearch("");
-            setPage(0);
-
-            setTempFrom("");
-            setTempTo("");
-            setFromDate("");
-            setToDate("");
-
-            setSelectedMonth("");
-          }}
-        >
+      <Paper sx={{ p: 2, borderRadius: 2 }}>
+        <Tabs value={tabIndex} onChange={(_, v) => setTabIndex(v)}>
           {tabs.map((t, i) => (
             <Tab key={i} label={t.label} />
           ))}
         </Tabs>
 
         <TableSearch
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
+          value={tableState.search}
+          onChange={(e) =>
+            setTableState((p) => ({ ...p, search: e.target.value, page: 0 }))
+          }
           label={activeTab.label}
         />
+
         {isTransactionTab && (
           <TableDateFilter
-            fromDate={tempFrom}
-            toDate={tempTo}
-            onFromDateChange={setTempFrom}
-            onToDateChange={setTempTo}
-            onApply={() => {
-              setFromDate(tempFrom);
-              setToDate(tempTo);
-              setPage(0);
-            }}
-            onClear={() => {
-              setTempFrom("");
-              setTempTo("");
-              setFromDate("");
-              setToDate("");
-              setPage(0);
-            }}
+            fromDate={tableState.draftDateRange.from}
+            toDate={tableState.draftDateRange.to}
+            onFromDateChange={(v) =>
+              setTableState((p) => ({
+                ...p,
+                draftDateRange: { ...p.draftDateRange, from: v },
+              }))
+            }
+            onToDateChange={(v) =>
+              setTableState((p) => ({
+                ...p,
+                draftDateRange: { ...p.draftDateRange, to: v },
+              }))
+            }
+            onApply={() =>
+              setTableState((p) => ({
+                ...p,
+                dateRange: { ...p.draftDateRange },
+                page: 0,
+              }))
+            }
+            onClear={() =>
+              setTableState((p) => ({
+                ...p,
+                draftDateRange: { from: "", to: "" },
+                dateRange: { from: "", to: "" },
+                page: 0,
+              }))
+            }
           />
         )}
-
 
         {isMonthlyTab && (
           <TableMonthFilter
-            value={selectedMonth}
-            handleMonthChange={(value) => {
-              setSelectedMonth(value);
-              setPage(0);
-            }}
-            handleClear={() => {
-              setSelectedMonth("");
-              setPage(0);
-            }}
+            value={tableState.selectedMonth}
+            handleMonthChange={(value) =>
+              setTableState((p) => ({ ...p, selectedMonth: value, page: 0 }))
+            }
+            handleClear={() =>
+              setTableState((p) => ({ ...p, selectedMonth: "", page: 0 }))
+            }
           />
         )}
-        <TableContainer sx={{ maxHeight: 1000, overflowX: "auto" }}>
+
+        <TableContainer>
           <Table stickyHeader>
             <TableHeader
               columns={activeTab.columns}
-              order={order}
-              orderBy={orderBy}
+              order={tableState.order}
+              orderBy={tableState.orderBy}
               onSort={handleSort}
             />
-
             <TableBodyComponent
               data={paginatedData}
               columns={activeTab.columns}
@@ -238,20 +250,17 @@ const CommonTable = ({ tabs }) => {
         </TableContainer>
 
         <TablePaginationComponent
-          count={filteredData.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(_, p) => setPage(p)}
-          onRowsPerPageChange={(e) => {
-            setRowsPerPage(Number(e.target.value));
-            setPage(0);
-          }}
+          count={isMonthlyTab ? groupedData.length : filteredData.length}
+          page={tableState.page}
+          rowsPerPage={isMonthlyTab ? 2 : 5}
+          onPageChange={(_, p) =>
+            setTableState((prev) => ({ ...prev, page: p }))
+          }
         />
       </Paper>
     </Container>
   );
 };
-
 CommonTable.propTypes = {
   tabs: PropTypes.arrayOf(
     PropTypes.shape({

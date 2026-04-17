@@ -2,11 +2,7 @@ import React from "react";
 import { logger } from "../utils/logger";
 import ErrorDisplay from "../components/ErrorDisplay";
 import PropTypes from "prop-types";
-/**
- * Error boundary component
- * @extends React.Component
- * @param {React.ReactNode} children - wrapped components
- */
+
 class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);

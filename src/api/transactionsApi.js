@@ -16,11 +16,6 @@ export const fetchTransactions = async (signal) => {
     return data;
   } catch (error) {
     logger.error("Error fetching transactions", error);
-
-    if (error.message === "Invalid data format") {
-      throw error;
-    }
-
-    throw new Error("Failed to fetch transactions");
+    throw new Error(error?.message || "Failed to fetch transactions");
   }
 };

@@ -42,6 +42,7 @@ const TableDateFilter = ({
                         textField: {
                             size: "small",
                             sx: { minWidth: 160 },
+                            error: false,
                         },
                     }}
                 />
@@ -60,6 +61,7 @@ const TableDateFilter = ({
                         textField: {
                             size: "small",
                             sx: { minWidth: 160 },
+                            error: false,
                         },
                     }}
                 />

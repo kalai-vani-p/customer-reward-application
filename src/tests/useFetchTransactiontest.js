@@ -1,14 +1,14 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import useDataFetcher from "../hooks/useDataFetcher";
+import useFetchTransaction from "../hooks/useFetchTransaction";
 import * as api from "../api/transactionsApi";
 
-describe("useDataFetcher", () => {
+describe("useFetchTransaction", () => {
   test("success flow", async () => {
     jest.spyOn(api, "fetchTransactions").mockResolvedValue([
       { price: 120, customerId: "1", date: "2024-01-01" },
     ]);
 
-    const { result } = renderHook(() => useDataFetcher());
+    const { result } = renderHook(() => useFetchTransaction());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -19,7 +19,7 @@ describe("useDataFetcher", () => {
   test("failure flow", async () => {
     jest.spyOn(api, "fetchTransactions").mockRejectedValue("error");
 
-    const { result } = renderHook(() => useDataFetcher());
+    const { result } = renderHook(() => useFetchTransaction());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 

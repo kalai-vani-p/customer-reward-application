@@ -3,9 +3,6 @@ import { Box, Select, MenuItem, Button, InputLabel, FormControl } from "@mui/mat
 import PropTypes from "prop-types";
 import dayjs from "dayjs";
 
-/**
- * Month-Year picker (last 3 months only)
- */
 const TableMonthFilter = ({
     value,
     handleMonthChange,

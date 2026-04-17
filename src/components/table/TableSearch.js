@@ -1,12 +1,6 @@
 import { TextField, InputAdornment, Box } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import PropTypes from "prop-types";
-/**
- * Search input component
- * @param {string} value - search text
- * @param {Function} onChange - input change handler
- * @param {string} label - input label
- */
 
 const TableSearch = ({ value, onChange, label }) => {
   return (
